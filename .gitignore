@@ -1,0 +1,99 @@
+# Node.js dependencies
+traffic-dashboard/node_modules/
+
+# Build outputs
+traffic-dashboard/build/
+
+# Log files
+*.log
+
+# Environment variables
+.env
+
+# Firebase credentials (should never be committed)
+firebase_creds.json
+
+# OS generated files
+Thumbs.db
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Icon?
+*[Tt]humbs.db
+
+# Windows
+*.exe
+*.dll
+*.bat
+*.cmd
+
+# Temporary files
+*.tmp
+*.temp
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+.ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VS Code
+.vscode/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# IntelliJ
+*.iml
+*.iws
+out/
+.idea/
+
+# Miscellaneous
+*.class
+*.manifest
+*.jar
+*.war
+*.ear
+*.orig
+*.rej
+*.bak
+*.DS_Store
+.DS_Store
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
