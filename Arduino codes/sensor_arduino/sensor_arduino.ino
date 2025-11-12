@@ -19,11 +19,7 @@ void setup() {
 void loop() {
   readSensors();
   sendToPi();
-<<<<<<< HEAD:Arduino codes/sensor_arduino/sensor_arduino.ino
   delay(200); 
-=======
-  delay(200);  
->>>>>>> 202deb6116a4ea65bd8b4d3a7c4a4d9d6fad8b6d:Arduino codes/sensor_arduino.ino
 }
 
 void readSensors() {
@@ -42,6 +38,6 @@ void sendToPi() {
   for (int i = 0; i < 4; i++) {
     log += "LANE" + String(i) + ":" + String(densities[i]) + ";";
   }
-  Serial.println(log); 
+  Serial.println(log);  
   Serial.flush();
 }
