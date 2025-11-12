@@ -16,19 +16,12 @@ ref = db.reference('traffic_logs')
 app = Flask(__name__)
 CORS(app)
 
-# ... (after app = Flask(...) and CORS(app))
 
 def push_to_firebase_async(data):
-    """
-    Formats data with a human-readable timestamp and pushes to Firebase
-    in a non-blocking thread.
-    """
+    
     try:
-        # 1. Format the timestamp as requested
         human_readable_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         log_data = {**data, 'timestamp': human_readable_time}
-        
-        # 2. The actual network operation (runs in its own thread)
         ref.push(log_data)
     except Exception as e:
         print(f"Firebase push error: {e}")
@@ -43,7 +36,7 @@ manual_mode = False
 manual_thread = None
 first_data_received = False
 sensor_ser = None
-led_ser = None  # ← THIS MUST BE HERE
+led_ser = None 
 smart_cycle_state = "ALL_RED"
 
 def open_serial(port):
@@ -62,7 +55,7 @@ sensor_ser = open_serial(SENSOR_PORT)
 led_ser = open_serial(LED_PORT)
 
 def safe_write(data):
-    global led_ser  # ← THIS LINE WAS MISSING!
+    global led_ser 
     try:
         led_ser.write(data)
     except:
@@ -85,56 +78,41 @@ def sensor_thread():
     global last_densities, current_lane, manual_mode, first_data_received
     global timer_remaining, timer_state, smart_cycle_state
 
-    # Get the time before the loop starts
     last_time = time.time()
 
     while True:
         try:
-            # --- NEW: Delta-Time (dt) Calculation ---
-            # Calculate how much time has passed since the last loop
             current_time = time.time()
-            dt = current_time - last_time  # dt is the "delta-time"
+            dt = current_time - last_time  
             last_time = current_time
-            # --- End of Delta-Time ---
 
-            # 1. READ SENSOR DATA
-            # 1. READ SENSOR DATA
             if sensor_ser.in_waiting:
                 line = sensor_ser.readline().decode('utf-8', errors='ignore').strip()
                 if line.startswith("LANE"):
                     new_d = parse_density(line)
                     if new_d:
-                        # Update the global state immediately
+                        
                         last_densities = {**last_densities, **new_d}
 
-                        # --- OLD CODE TO REPLACE ---
-                        # ref.push({**last_densities, 'timestamp': int(time.time()*1000)})
-                        # print(f"Live: {new_d}")
-                        # --- END OLD CODE ---
-
-                        # --- NEW NON-BLOCKING CODE ---
-                        # Push to Firebase in a separate thread
-                        data_copy = last_densities.copy() # Make a thread-safe copy
+                        data_copy = last_densities.copy() 
                         threading.Thread(target=push_to_firebase_async, args=(data_copy,), daemon=True).start()
-                        # --- END NEW CODE ---
+                        
                         
                         if not first_data_received:
                             first_data_received = True
                             print("FIRST DATA → STARTING CYCLE")
 
-            # 2. TIMER TICK (Always runs)
+            
             for i in range(4):
                 key = f'lane{i}'
                 if timer_remaining[key] > 0:
-                    # --- MODIFIED: Use dt ---
-                    timer_remaining[key] -= dt # Subtract real elapsed time
-                    # --- End of Mod ---
+                   
+                    timer_remaining[key] -= dt 
                     if timer_remaining[key] <= 0:
                         timer_remaining[key] = 0
                         if timer_state[key] not in ["Green", "Yellow"]:
                             timer_state[key] = ""
 
-            # 3. SMART CYCLE STATE MACHINE (Non-blocking)
             if not manual_mode and first_data_received:
                 
                 if smart_cycle_state == "ALL_RED":
@@ -174,11 +152,8 @@ def sensor_thread():
 
         except Exception as e:
             print(f"Error in sensor_thread: {e}")
-            
-        # --- MODIFIED: Faster loop ---
-        # Sleep for a tiny bit to prevent 100% CPU usage
+
         time.sleep(0.05) 
-        # --- End of Mod ---
       
 threading.Thread(target=sensor_thread, daemon=True).start()
 
@@ -200,11 +175,9 @@ def manual():
     
     lane = request.json.get('lane')
     
-    # --- RESUME SMART MODE ---
     if lane is None:
         manual_mode = False
-        smart_cycle_state = "ALL_RED" # Reset state machine
-        # Go all red immediately
+        smart_cycle_state = "ALL_RED" 
         safe_write(b"ALL:R\n")
         for i in range(4):
             last_light[f'lane{i}'] = "Red"
@@ -213,18 +186,14 @@ def manual():
         
         return jsonify({"ok": True, "action": "resuming_smart_mode"})
 
-    # --- FORCE GREEN MODE ---
-    manual_mode = True # Stop the smart cycle
+    manual_mode = True 
     
-    # Find the currently active lane from the smart cycle
     active_lane = -1
     if (smart_cycle_state == "GREEN" or smart_cycle_state == "YELLOW") and timer_remaining[f'lane{current_lane}'] > 0:
         active_lane = current_lane
     
-    # Stop the smart cycle state machine
     smart_cycle_state = "ALL_RED" 
     
-    # This thread will run the full manual sequence
     def run_manual_sequence(forced_lane_str, active_lane_to_clear):
         global manual_mode, smart_cycle_state
         
@@ -232,37 +201,30 @@ def manual():
         forced_key = f'lane{forced_lane}'
         
         try:
-            # 1. NEW: Clear the intersection (5s yellow for active lane)
             if active_lane_to_clear != -1 and active_lane_to_clear != forced_lane:
                 print(f"Clearing active lane {active_lane_to_clear} first...")
                 active_key = f'lane{active_lane_to_clear}'
                 
-                # Update state for dashboard
                 timer_remaining[active_key] = 5
                 timer_state[active_key] = "Yellow"
                 last_light[active_key] = "Yellow"
-                # Set all *other* lights red
                 for i in range(4):
                     if i != active_lane_to_clear: last_light[f'lane{i}'] = "Red"
                 
-                # Send command to Arduino
                 safe_write(f"LANE{active_lane_to_clear}:Y\n".encode())
                 
-                # Run this timer down in a blocking way (it's a thread)
                 start_yellow = time.time()
                 while time.time() - start_yellow < 5:
                     timer_remaining[active_key] = 5 - (time.time() - start_yellow)
                     time.sleep(0.1)
 
-            # 2. Go ALL RED (Safety)
             safe_write(b"ALL:R\n")
             for i in range(4):
                 last_light[f'lane{i}'] = "Red"
                 timer_state[f'lane{i}'] = ""
                 timer_remaining[f'lane{i}'] = 0
-            time.sleep(1) # Safety gap
+            time.sleep(1)
 
-            # 3. Force Green for the requested lane
             timer_remaining[forced_key] = 30
             timer_state[forced_key] = "Green"
             last_light[forced_key] = "Green"
@@ -270,12 +232,11 @@ def manual():
 
             start_green = time.time()
             while time.time() - start_green < 30:
-                if not manual_mode: # Allow "Resume Smart" to interrupt
+                if not manual_mode: 
                     raise Exception("Manual mode cancelled")
                 timer_remaining[forced_key] = 30 - (time.time() - start_green)
                 time.sleep(0.1)
 
-            # 4. Force Yellow for the requested lane
             timer_remaining[forced_key] = 5
             timer_state[forced_key] = "Yellow"
             last_light[forced_key] = "Yellow"
@@ -283,7 +244,7 @@ def manual():
             
             start_yellow_2 = time.time()
             while time.time() - start_yellow_2 < 5:
-                if not manual_mode: # Allow "Resume Smart" to interrupt
+                if not manual_mode:
                      raise Exception("Manual mode cancelled")
                 timer_remaining[forced_key] = 5 - (time.time() - start_yellow_2)
                 time.sleep(0.1)
@@ -292,7 +253,6 @@ def manual():
             print(f"Manual sequence error/interrupted: {e}")
         
         finally:
-            # 5. Go All Red and resume smart mode
             safe_write(b"ALL:R\n")
             for i in range(4):
                 last_light[f'lane{i}'] = "Red"
@@ -303,7 +263,6 @@ def manual():
             smart_cycle_state = "ALL_RED"
             print("Manual sequence finished. Resuming smart mode.")
 
-    # Start the sequence in a new thread
     manual_thread = threading.Thread(target=run_manual_sequence, args=(lane, active_lane), daemon=True)
     manual_thread.start()
     

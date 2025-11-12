@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API = 'http://10.32.14.84:5000/api'; // Change if Pi IP changes
+const API = 'http://10.32.14.84:5000/api';
 
 function App() {
   const [data, setData] = useState({
@@ -26,7 +26,7 @@ function App() {
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 500); // Update every 0.5s
+    const interval = setInterval(fetchData, 500); 
     return () => clearInterval(interval);
   }, []);
 

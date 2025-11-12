@@ -1,7 +1,6 @@
-// led_arduino.ino 
 #define NUM_LANES 4
 
-// LED Pins: {Red, Yellow, Green} - Using D2-D13 (no conflicts)
+// LED Pins: {Red, Yellow, Green} - Using D2-D13
 int ledPins[NUM_LANES][3] = {
   {2, 3, 4},   // Lane 0: North
   {5, 6, 7},   // Lane 1: East
@@ -39,7 +38,7 @@ void execute(String cmd) {
     if (lane >= 0 && lane < 4) {
       if (state == 'G') setGreen(lane);
       else if (state == 'Y') setYellow(lane);
-      else if (state == 'R') setAllRed(); // FIXED: Changed setRed to setAllRed
+      else if (state == 'R') setAllRed(); 
     }
   }
 }

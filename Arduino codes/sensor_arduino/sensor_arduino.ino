@@ -19,7 +19,7 @@ void setup() {
 void loop() {
   readSensors();
   sendToPi();
-  delay(200);  // Every 0.2s → super smooth
+  delay(200); 
 }
 
 void readSensors() {
@@ -38,6 +38,6 @@ void sendToPi() {
   for (int i = 0; i < 4; i++) {
     log += "LANE" + String(i) + ":" + String(densities[i]) + ";";
   }
-  Serial.println(log);  // ← THIS IS THE FIX: println() adds \n
+  Serial.println(log); 
   Serial.flush();
 }
