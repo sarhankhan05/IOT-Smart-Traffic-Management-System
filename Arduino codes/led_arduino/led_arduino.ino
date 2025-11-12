@@ -1,6 +1,9 @@
 #define NUM_LANES 4
 
+<<<<<<< HEAD:Arduino codes/led_arduino/led_arduino.ino
 // LED Pins: {Red, Yellow, Green} - Using D2-D13
+=======
+>>>>>>> 202deb6116a4ea65bd8b4d3a7c4a4d9d6fad8b6d:Arduino codes/led_arduino.ino
 int ledPins[NUM_LANES][3] = {
   {2, 3, 4},   // Lane 0: North
   {5, 6, 7},   // Lane 1: East
@@ -11,14 +14,13 @@ int ledPins[NUM_LANES][3] = {
 void setup() {
   Serial.begin(9600);
 
-  // Initialize LED pins
   for (int lane = 0; lane < NUM_LANES; lane++) {
     for (int i = 0; i < 3; i++) {
       pinMode(ledPins[lane][i], OUTPUT);
       digitalWrite(ledPins[lane][i], LOW);
     }
   }
-  setAllRed(); // Start with all red
+  setAllRed(); 
 }
 
 void loop() {
@@ -38,14 +40,18 @@ void execute(String cmd) {
     if (lane >= 0 && lane < 4) {
       if (state == 'G') setGreen(lane);
       else if (state == 'Y') setYellow(lane);
+<<<<<<< HEAD:Arduino codes/led_arduino/led_arduino.ino
       else if (state == 'R') setAllRed(); 
+=======
+      else if (state == 'R') setAllRed();
+>>>>>>> 202deb6116a4ea65bd8b4d3a7c4a4d9d6fad8b6d:Arduino codes/led_arduino.ino
     }
   }
 }
 
 void setAllRed() {
   for (int l = 0; l < NUM_LANES; l++) {
-    digitalWrite(ledPins[l][0], HIGH); // Red ON
+    digitalWrite(ledPins[l][0], HIGH); 
     digitalWrite(ledPins[l][1], LOW);
     digitalWrite(ledPins[l][2], LOW);
   }
@@ -53,9 +59,9 @@ void setAllRed() {
 
 void setGreen(int lane) {
   for (int i = 0; i < NUM_LANES; i++) {
-    digitalWrite(ledPins[i][0], (i == lane) ? LOW : HIGH); // Red OFF for green lane
+    digitalWrite(ledPins[i][0], (i == lane) ? LOW : HIGH); 
     digitalWrite(ledPins[i][1], LOW);
-    digitalWrite(ledPins[i][2], (i == lane) ? HIGH : LOW); // Green ON
+    digitalWrite(ledPins[i][2], (i == lane) ? HIGH : LOW); 
   }
 }
 
